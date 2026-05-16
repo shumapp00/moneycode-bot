@@ -12,21 +12,13 @@ Configuration.account_id = YOOKASSA_SHOP_ID
 Configuration.secret_key = YOOKASSA_SECRET_KEY
 
 
-async def create_payment(user_id: int, amount: float, product_type: str, description: str) -> tuple[str, str]:
+async def create_payment(user_id: int, amount: float, product_type: str, description: str):
     """
     Создает платеж в ЮKassa.
-    
-    Аргументы:
-        user_id: Telegram ID пользователя
-        amount: сумма в рублях
-        product_type: тип продукта ("499" или "999")
-        description: описание товара
-    
-    Возвращает:
-        (payment_id, payment_url) — ID платежа и ссылку на оплату
+    Возвращает (payment_id, payment_url).
     """
-    idempotency_key = str(uuid.uuid4())  # Уникальный ключ для защиты от повторов
-    
+    idempotency_key = str(uuid.uuid4())
+
     payment = Payment.create({
         "amount": {
             "value": str(amount),
@@ -34,26 +26,20 @@ async def create_payment(user_id: int, amount: float, product_type: str, descrip
         },
         "confirmation": {
             "type": "redirect",
-            "return_url": "https://t.me/moneey_code_bot"  # Ссылка на бота
+            "return_url": "https://t.me/moneey_code_bot"
         },
-        "capture": True,  # Автоматически списывать
+        "capture": True,
         "description": description,
         "metadata": {
             "user_id": user_id,
             "product_type": product_type
         }
     }, idempotency_key)
-    
-    payment_id = payment.id
-    payment_url = payment.confirmation.confirmation_url
-    
-    return payment_id, payment_url
+
+    return payment.id, payment.confirmation.confirmation_url
 
 
-async def get_payment_status(payment_id: str) -> str:
-    """
-    Проверяет статус платежа.
-    Возвращает: 'pending', 'waiting_for_capture', 'succeeded', 'canceled'
-    """
+async def get_payment_status(payment_id: str):
+    """Проверяет статус платежа."""
     payment = Payment.find_one(payment_id)
     return payment.status
