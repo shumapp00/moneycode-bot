@@ -6,9 +6,8 @@
 import asyncio
 import logging
 import os
-import traceback
 
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import FSInputFile, Message, CallbackQuery
 from aiogram.client.default import DefaultBotProperties
@@ -22,20 +21,16 @@ from config import (
 )
 from database import (
     add_user, mark_free_guide_sent, has_free_guide,
-    save_payment, mark_payment_success, get_all_users_count,
-    init_db
+    save_payment, init_db
 )
 from keyboards import (
     get_main_menu, get_subscription_check, get_catalog_menu,
-    get_payment_button, get_back_to_menu
+    get_payment_button
 )
 from payments import create_payment
 
 # Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Создаем бота и диспетчер
@@ -50,15 +45,9 @@ dp = Dispatcher()
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
     """Обрабатывает команду /start."""
-    print(">>> КОМАНДА /start ПОЛУЧЕНА <<<")
     user = message.from_user
-    
-    try:
-        await add_user(user.id, user.username, user.first_name)
-        print(f">>> Пользователь {user.id} добавлен в базу")
-    except Exception as e:
-        print(f">>> Ошибка добавления пользователя: {e}")
-    
+    await add_user(user.id, user.username, user.first_name)
+
     welcome_text = (
         f"👋 <b>Привет, {user.first_name}!</b>\n\n"
         f"Я — бот канала <b>Money Code</b>. "
@@ -66,12 +55,8 @@ async def cmd_start(message: Message):
         f"Мы перепрошиваем денежное мышление на уровне кода.\n\n"
         f"<i>Выбери, с чего хочешь начать:</i>"
     )
-    
-    try:
-        await message.answer(welcome_text, reply_markup=get_main_menu())
-        print(">>> Приветствие отправлено")
-    except Exception as e:
-        print(f">>> ОШИБКА отправки приветствия: {e}")
+
+    await message.answer(welcome_text, reply_markup=get_main_menu())
 
 
 @dp.message(Command("help"))
@@ -94,21 +79,16 @@ async def cmd_help(message: Message):
 @dp.message(F.text == "🎁 Получить бесплатный гайд")
 async def free_guide_start(message: Message):
     """Показывает предложение получить бесплатный гайд."""
-    print(">>> КНОПКА 'БЕСПЛАТНЫЙ ГАЙД' НАЖАТА <<<")
     user = message.from_user
-    
-    # Проверяем, получал ли уже
-    try:
-        already_has = await has_free_guide(user.id)
-        if already_has:
-            await message.answer(
-                "✨ Ты уже получал(а) бесплатный гайд «Честный аудит».\n"
-                "Если потерял(а) файл — напиши в поддержку: @moneycode"
-            )
-            return
-    except Exception as e:
-        print(f">>> Ошибка проверки has_free_guide: {e}")
-    
+
+    already_has = await has_free_guide(user.id)
+    if already_has:
+        await message.answer(
+            "✨ Ты уже получал(а) бесплатный гайд «Честный аудит».\n"
+            "Если потерял(а) файл — напиши в поддержку: @moneycode"
+        )
+        return
+
     text = (
         "🎁 <b>Бесплатный гайд «Честный аудит»</b>\n\n"
         "Ты узнаешь:\n"
@@ -120,14 +100,13 @@ async def free_guide_start(message: Message):
         "2️⃣ Нажми кнопку «Я подписался(ась)»\n"
         "3️⃣ Бот сразу отправит PDF-файл"
     )
-    
+
     await message.answer(text, reply_markup=get_subscription_check())
 
 
 @dp.message(F.text == "📚 Купить методички")
 async def show_catalog(message: Message):
     """Показывает каталог платных методичек."""
-    print(">>> КНОПКА 'КУПИТЬ МЕТОДИЧКИ' НАЖАТА <<<")
     text = (
         "📚 <b>Методички Money Code</b>\n\n"
         "Выбери, какой уровень проработки тебе нужен:\n\n"
@@ -174,32 +153,19 @@ async def support(message: Message):
 @dp.callback_query(F.data == "check_subscription")
 async def process_subscription_check(callback: CallbackQuery):
     """Обрабатывает нажатие «Я подписался»."""
-    print(">>> КНОПКА 'Я ПОДПИСАЛСЯ' НАЖАТА <<<")
     user = callback.from_user
-    
+
     try:
-        # Проверяем, существует ли файл
-        print(f">>> Проверяю файл: {PDF_FREE}")
-        print(f">>> Абсолютный путь: {os.path.abspath(PDF_FREE)}")
-        print(f">>> Файл существует: {os.path.exists(PDF_FREE)}")
-        
-        # Пробуем другой способ указания пути
         file_path = os.path.join(os.path.dirname(__file__), PDF_FREE)
-        print(f">>> Альтернативный путь: {file_path}")
-        print(f">>> Файл существует (alt): {os.path.exists(file_path)}")
-        
+
         if not os.path.exists(file_path):
             await callback.message.answer(
-                f"❌ Файл не найден.\n"
-                f"Путь: {file_path}\n"
-                f"Напиши админу: @moneycode"
+                "😔 Файл временно недоступен. Напиши в поддержку: @moneycode"
             )
-            await callback.answer("Ошибка: файл не найден")
+            await callback.answer("Файл не найден")
             return
-        
-        print(">>> Отправляю файл...")
+
         pdf_file = FSInputFile(file_path)
-        
         await callback.message.answer_document(
             document=pdf_file,
             caption=(
@@ -208,12 +174,9 @@ async def process_subscription_check(callback: CallbackQuery):
                 "загляни в платные методички. Они помогут их проработать."
             )
         )
-        print(">>> Файл отправлен успешно!")
-        
+
         await mark_free_guide_sent(user.id)
-        print(">>> Статус в базе обновлен")
-        
-        # Уведомление админу
+
         try:
             await bot.send_message(
                 ADMIN_ID,
@@ -221,27 +184,23 @@ async def process_subscription_check(callback: CallbackQuery):
             )
         except:
             pass
-        
+
     except Exception as e:
-        print(f">>> ОШИБКА: {e}")
-        print(traceback.format_exc())
+        logger.error(f"Ошибка отправки бесплатного гайда: {e}")
         await callback.message.answer(
-            f"❌ Произошла ошибка при отправке файла.\n"
-            f"Ошибка: {e}\n"
-            f"Напиши админу: @moneycode"
+            "😔 Произошла ошибка при отправке файла. Напиши в поддержку: @moneycode"
         )
-    
+
     await callback.answer()
 
 
 @dp.callback_query(F.data == "buy_499")
 async def process_buy_499(callback: CallbackQuery):
     """Создает платеж на 499 рублей."""
-    print(">>> КНОПКА 'КУПИТЬ 499' НАЖАТА <<<")
     user = callback.from_user
-    
+
     await callback.message.answer("⏳ Создаю ссылку на оплату...")
-    
+
     try:
         payment_id, payment_url = await create_payment(
             user_id=user.id,
@@ -249,40 +208,32 @@ async def process_buy_499(callback: CallbackQuery):
             product_type="499",
             description=PRODUCT_499_DESC
         )
-        
-        print(f">>> Платеж создан: {payment_id}")
-        print(f">>> Ссылка: {payment_url}")
-        
+
         await save_payment(user.id, payment_id, 499.0, "499")
-        
+
         await callback.message.answer(
             f"📘 <b>{PRODUCT_499_NAME}</b>\n\n"
             f"Сумма: <b>499 ₽</b>\n\n"
-            f"После оплаты методичка придет автоматически в этот чат.\n\n"
-            f"<a href='{payment_url}'>💳 Нажми сюда для оплаты</a>",
+            f"После оплаты методичка придет автоматически в этот чат.",
             reply_markup=get_payment_button(payment_url, "499 ₽")
         )
-        
+
     except Exception as e:
-        print(f">>> ОШИБКА ПЛАТЕЖА 499: {e}")
-        print(traceback.format_exc())
+        logger.error(f"Ошибка создания платежа 499: {e}")
         await callback.message.answer(
-            f"❌ Ошибка при создании платежа.\n"
-            f"Ошибка: {e}\n"
-            f"Попробуй позже или напиши админу: @moneycode"
+            "😔 Ошибка при создании платежа. Попробуй позже или напиши в поддержку: @moneycode"
         )
-    
+
     await callback.answer()
 
 
 @dp.callback_query(F.data == "buy_999")
 async def process_buy_999(callback: CallbackQuery):
     """Создает платеж на 999 рублей."""
-    print(">>> КНОПКА 'КУПИТЬ 999' НАЖАТА <<<")
     user = callback.from_user
-    
+
     await callback.message.answer("⏳ Создаю ссылку на оплату...")
-    
+
     try:
         payment_id, payment_url = await create_payment(
             user_id=user.id,
@@ -290,29 +241,22 @@ async def process_buy_999(callback: CallbackQuery):
             product_type="999",
             description=PRODUCT_999_DESC
         )
-        
-        print(f">>> Платеж создан: {payment_id}")
-        print(f">>> Ссылка: {payment_url}")
-        
+
         await save_payment(user.id, payment_id, 999.0, "999")
-        
+
         await callback.message.answer(
             f"📗 <b>{PRODUCT_999_NAME}</b>\n\n"
             f"Сумма: <b>999 ₽</b>\n\n"
-            f"После оплаты методичка придет автоматически в этот чат.\n\n"
-            f"<a href='{payment_url}'>💳 Нажми сюда для оплаты</a>",
+            f"После оплаты методичка придет автоматически в этот чат.",
             reply_markup=get_payment_button(payment_url, "999 ₽")
         )
-        
+
     except Exception as e:
-        print(f">>> ОШИБКА ПЛАТЕЖА 999: {e}")
-        print(traceback.format_exc())
+        logger.error(f"Ошибка создания платежа 999: {e}")
         await callback.message.answer(
-            f"❌ Ошибка при создании платежа.\n"
-            f"Ошибка: {e}\n"
-            f"Попробуй позже или напиши админу: @moneycode"
+            "😔 Ошибка при создании платежа. Попробуй позже или напиши в поддержку: @moneycode"
         )
-    
+
     await callback.answer()
 
 
@@ -353,30 +297,21 @@ async def process_main_menu(callback: CallbackQuery):
 
 async def main():
     """Запуск бота."""
-    print(">>> main() начал работу")
-    try:
-        print(">>> Инициализация базы данных...")
-        await init_db()
-        print(">>> База данных готова")
-        
-        print(">>> Удаляю старые вебхуки...")
-        await bot.delete_webhook(drop_pending_updates=True)
-        print(">>> Старые вебхуки удалены")
-        
-        print(">>> ЗАПУСК ПОЛЛИНГА...")
-        print(">>> Бот готов к работе! Открой Telegram и нажми /start")
-        await dp.start_polling(bot)
-    except Exception as e:
-        print(f"!!! ОШИБКА В MAIN: {e}")
-        print(traceback.format_exc())
+    logger.info("Инициализация базы данных...")
+    await init_db()
+    logger.info("База данных готова")
+
+    logger.info("Удаление старых вебхуков...")
+    await bot.delete_webhook(drop_pending_updates=True)
+
+    logger.info("Запуск поллинга...")
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    print(">>> Запуск asyncio.run(main())")
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print(">>> Бот остановлен вручную")
+        logger.info("Бот остановлен вручную")
     except Exception as e:
-        print(f"!!! КРИТИЧЕСКАЯ ОШИБКА: {e}")
-        print(traceback.format_exc())
+        logger.error(f"Критическая ошибка: {e}")
