@@ -68,7 +68,7 @@ async def cmd_help(message: Message):
         "🎁 <b>Бесплатный гайд</b> — диагностика денежных блоков за 15 минут.\n"
         "📘 <b>Методичка за 499₽</b> — система финансовых ритуалов на 30 дней.\n"
         "📗 <b>Методичка за 999₽</b> — глубинная перепрошивка родовых сценариев.\n\n"
-        "❓ <i>По вопросам пиши в Instagram:</i> @moneycode"
+        "❓ <i>По вопросам пиши в Instagram:</i> @_mooney.code_"
     )
     await message.answer(help_text)
 
@@ -86,7 +86,7 @@ async def free_guide_start(message: Message):
     if already_has:
         await message.answer(
             "✨ Ты уже получал(а) бесплатный гайд «Честный аудит».\n"
-            "Если потерял(а) файл — напиши в поддержку: @moneycode"
+            "Если потерял(а) файл — напиши в поддержку: @_mooney.code_"
         )
         return
 
@@ -128,7 +128,7 @@ async def about_channel(message: Message):
         "финансовые привычки в систему.\n\n"
         "Мы не верим в «волшебные таблетки» и «марафоны желаний». "
         "Мы верим в нейронауку, ритуалы и честную работу с подсознанием.\n\n"
-        "📸 <b>Подписывайся:</b> Instagram @moneycode"
+        "📸 <b>Подписывайся:</b> Instagram @_mooney.code_"
     )
     await message.answer(text)
 
@@ -141,7 +141,7 @@ async def support(message: Message):
         "• Если не пришел файл после оплаты\n"
         "• Если потерял(а) методичку\n"
         "• Если есть вопросы по содержанию\n\n"
-        "Напиши мне в Instagram: <b>@moneycode</b>\n"
+        "Напиши мне в Instagram: <b>@_mooney.code_</b>\n"
         "Отвечаю в течение 24 часов."
     )
     await message.answer(text)
@@ -161,7 +161,7 @@ async def process_subscription_check(callback: CallbackQuery):
 
         if not os.path.exists(file_path):
             await callback.message.answer(
-                "😔 Файл временно недоступен. Напиши в поддержку: @moneycode"
+                "😔 Файл временно недоступен. Напиши в поддержку: @_mooney.code_"
             )
             await callback.answer("Файл не найден")
             return
@@ -189,7 +189,7 @@ async def process_subscription_check(callback: CallbackQuery):
     except Exception as e:
         logger.error(f"Ошибка отправки бесплатного гайда: {e}")
         await callback.message.answer(
-            "😔 Произошла ошибка при отправке файла. Напиши в поддержку: @moneycode"
+            "😔 Произошла ошибка при отправке файла. Напиши в поддержку: @_mooney.code_"
         )
 
     await callback.answer()
@@ -226,7 +226,7 @@ async def process_buy_499(callback: CallbackQuery):
         await callback.message.answer(
             f"😔 Ошибка при создании платежа.\n\n"
             f"<b>Код ошибки:</b>\n<code>{error_details[:300]}</code>\n\n"
-            f"Пришли этот текст админу: @moneycode"
+            f"Пришли этот текст админу: @_mooney.code_"
         )
 
     await callback.answer()
@@ -263,7 +263,7 @@ async def process_buy_999(callback: CallbackQuery):
         await callback.message.answer(
             f"😔 Ошибка при создании платежа.\n\n"
             f"<b>Код ошибки:</b>\n<code>{error_details[:300]}</code>\n\n"
-            f"Пришли этот текст админу: @moneycode"
+            f"Пришли этот текст админу: @pathrea"
         )
 
     await callback.answer()
