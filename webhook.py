@@ -239,7 +239,7 @@ async def index_handler(request: web.Request):
     return web.Response(
         text="✅ Money Code Bot is running!\n\n"
              "Telegram: @moneycode_bot\n"
-             "Instagram: @moneycode",
+             "Instagram: @_mooney.code_",
         content_type="text/plain"
     )
 
