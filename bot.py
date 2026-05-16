@@ -6,6 +6,7 @@
 import asyncio
 import logging
 import os
+import traceback
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
@@ -219,15 +220,14 @@ async def process_buy_499(callback: CallbackQuery):
         )
 
     except Exception as e:
-    import traceback
-    error_text = traceback.format_exc()
-    logger.error(f"Ошибка создания платежа 499: {e}")
-    logger.error(error_text)
-    await callback.message.answer(
-        f"😔 Ошибка при создании платежа.\n\n"
-        f"<b>Текст ошибки:</b>\n<code>{str(e)[:300]}</code>\n\n"
-        f"Пришли этот текст админу: @moneycode"
-    )
+        error_details = str(e)
+        logger.error(f"Ошибка создания платежа 499: {error_details}")
+        logger.error(traceback.format_exc())
+        await callback.message.answer(
+            f"😔 Ошибка при создании платежа.\n\n"
+            f"<b>Код ошибки:</b>\n<code>{error_details[:300]}</code>\n\n"
+            f"Пришли этот текст админу: @moneycode"
+        )
 
     await callback.answer()
 
@@ -257,15 +257,14 @@ async def process_buy_999(callback: CallbackQuery):
         )
 
     except Exception as e:
-    import traceback
-    error_text = traceback.format_exc()
-    logger.error(f"Ошибка создания платежа 999: {e}")
-    logger.error(error_text)
-    await callback.message.answer(
-        f"😔 Ошибка при создании платежа.\n\n"
-        f"<b>Текст ошибки:</b>\n<code>{str(e)[:300]}</code>\n\n"
-        f"Пришли этот текст админу: @moneycode"
-    )
+        error_details = str(e)
+        logger.error(f"Ошибка создания платежа 999: {error_details}")
+        logger.error(traceback.format_exc())
+        await callback.message.answer(
+            f"😔 Ошибка при создании платежа.\n\n"
+            f"<b>Код ошибки:</b>\n<code>{error_details[:300]}</code>\n\n"
+            f"Пришли этот текст админу: @moneycode"
+        )
 
     await callback.answer()
 
