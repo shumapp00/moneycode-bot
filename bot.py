@@ -219,10 +219,15 @@ async def process_buy_499(callback: CallbackQuery):
         )
 
     except Exception as e:
-        logger.error(f"Ошибка создания платежа 499: {e}")
-        await callback.message.answer(
-            "😔 Ошибка при создании платежа. Попробуй позже или напиши в поддержку: @moneycode"
-        )
+    import traceback
+    error_text = traceback.format_exc()
+    logger.error(f"Ошибка создания платежа 499: {e}")
+    logger.error(error_text)
+    await callback.message.answer(
+        f"😔 Ошибка при создании платежа.\n\n"
+        f"<b>Текст ошибки:</b>\n<code>{str(e)[:300]}</code>\n\n"
+        f"Пришли этот текст админу: @moneycode"
+    )
 
     await callback.answer()
 
@@ -252,10 +257,15 @@ async def process_buy_999(callback: CallbackQuery):
         )
 
     except Exception as e:
-        logger.error(f"Ошибка создания платежа 999: {e}")
-        await callback.message.answer(
-            "😔 Ошибка при создании платежа. Попробуй позже или напиши в поддержку: @moneycode"
-        )
+    import traceback
+    error_text = traceback.format_exc()
+    logger.error(f"Ошибка создания платежа 999: {e}")
+    logger.error(error_text)
+    await callback.message.answer(
+        f"😔 Ошибка при создании платежа.\n\n"
+        f"<b>Текст ошибки:</b>\n<code>{str(e)[:300]}</code>\n\n"
+        f"Пришли этот текст админу: @moneycode"
+    )
 
     await callback.answer()
 
