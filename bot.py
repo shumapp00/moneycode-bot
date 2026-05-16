@@ -152,6 +152,7 @@ async def support(message: Message):
 
 @dp.callback_query(F.data == "check_subscription")
 async def process_subscription_check(callback: CallbackQuery):
+    print(">>> КНОПКА 'Я ПОДПИСАЛСЯ' НАЖАТА <<<")
     """Обрабатывает нажатие «Я подписался»."""
     user = callback.from_user
     
