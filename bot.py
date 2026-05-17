@@ -38,6 +38,10 @@ logger = logging.getLogger(__name__)
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher()
 
+# URL картинок на imgbb
+WELCOME_IMAGE_URL = "https://i.ibb.co/xtnDWFDL/welcome.jpg"
+FREE_GUIDE_IMAGE_URL = "https://i.ibb.co/FLDDQvqZ/warmup-day1.jpg"  # Использую warmup_day1 как заглушку, замени если есть отдельная
+
 
 # ============================================================
 # ОБРАБОТЧИК КОМАНД
@@ -57,7 +61,15 @@ async def cmd_start(message: Message):
         f"<i>Выбери, с чего хочешь начать:</i>"
     )
 
-    await message.answer(welcome_text, reply_markup=get_main_menu())
+    try:
+        await message.answer_photo(
+            photo=WELCOME_IMAGE_URL,
+            caption=welcome_text,
+            reply_markup=get_main_menu()
+        )
+    except Exception as e:
+        logger.error(f"Не удалось отправить приветственную картинку: {e}")
+        await message.answer(welcome_text, reply_markup=get_main_menu())
 
 
 @dp.message(Command("help"))
@@ -179,6 +191,14 @@ async def process_subscription_check(callback: CallbackQuery):
         await mark_free_guide_sent(user.id)
 
         try:
+            await callback.message.answer_photo(
+                photo=FREE_GUIDE_IMAGE_URL,
+                caption="🧠 Твой денежный блок найден. Что дальше? Следующий шаг — система. Жми «📚 Купить методички»."
+            )
+        except Exception as e:
+            logger.error(f"Не удалось отправить картинку к гайду: {e}")
+
+        try:
             await bot.send_message(
                 ADMIN_ID,
                 f"📥 Пользователь @{user.username or user.id} получил бесплатный гайд."
@@ -263,7 +283,7 @@ async def process_buy_999(callback: CallbackQuery):
         await callback.message.answer(
             f"😔 Ошибка при создании платежа.\n\n"
             f"<b>Код ошибки:</b>\n<code>{error_details[:300]}</code>\n\n"
-            f"Пришли этот текст админу: @pathrea"
+            f"Пришли этот текст админу: @_mooney.code_"
         )
 
     await callback.answer()
@@ -301,6 +321,40 @@ async def process_main_menu(callback: CallbackQuery):
 
 
 # ============================================================
+# ОБРАБОТЧИК ОТВЕТОВ НА ОПРОСЫ ПОСЛЕ ПОКУПКИ
+# ============================================================
+
+@dp.message(F.text.in_([
+    "🟢", "🟢 Уже внедрил", "🟢 Уже внедрил(а) первые ритуалы, нравится",
+    "🟢 Погрузился(лась), идёт работа"
+]))
+async def feedback_green(message: Message):
+    await message.answer(
+        "🔥 Это лучшая новость за день! Если будут вопросы по ходу — просто пиши сюда. Я на связи."
+    )
+
+
+@dp.message(F.text.in_([
+    "🟡", "🟡 Читаю, пока осмысляю"
+]))
+async def feedback_yellow(message: Message):
+    await message.answer(
+        "🤓 Без спешки. Главное, что процесс идёт. Если что-то будет непонятно — маякни."
+    )
+
+
+@dp.message(F.text.in_([
+    "🔴", "🔴 Что-то непонятно или не заходит", "🔴 Что-то непонятно или «не моё»"
+]))
+async def feedback_red(message: Message):
+    await message.answer(
+        "Понял(а). Спасибо за честность.\n\n"
+        "Напиши, что именно не зашло или непонятно. Я либо помогу разобраться, либо верну деньги. "
+        "Без проблем. Это не конвейер. Мне важно, чтобы ты получил(а) результат."
+    )
+
+
+# ============================================================
 # ЗАПУСК БОТА
 # ============================================================
 
@@ -312,6 +366,9 @@ async def main():
 
     logger.info("Удаление старых вебхуков...")
     await bot.delete_webhook(drop_pending_updates=True)
+
+    from scheduler import start_scheduler
+    await start_scheduler()
 
     logger.info("Запуск поллинга...")
     await dp.start_polling(bot)
