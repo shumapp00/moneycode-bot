@@ -125,16 +125,17 @@ async def yookassa_webhook_handler(request: web.Request):
                         "Спасибо за покупку! 🚀"
                     )
                 )
-                # Отправляем картинку
                 try:
-                    photo_499 = FSInputFile(os.path.join(IMAGES_DIR, "method_499.jpeg"))
-                    await bot.send_photo(
-                        chat_id=int(user_id),
-                        photo=photo_499,
-                        caption="📘 Методичка у тебя. Это 30-дневный протокол. Внедряй по одному ритуалу в день."
-                    )
-                except:
-                    pass
+                    photo_path = os.path.join(IMAGES_DIR, "method_499.jpeg")
+                    if os.path.exists(photo_path):
+                        photo = FSInputFile(photo_path)
+                        await bot.send_photo(
+                            chat_id=int(user_id),
+                            photo=photo,
+                            caption="📘 Методичка у тебя. Это 30-дневный протокол. Внедряй по одному ритуалу в день."
+                        )
+                except Exception as e:
+                    logger.warning(f"Не удалось отправить картинку 499: {e}")
 
                 try:
                     await bot.send_message(
@@ -162,16 +163,17 @@ async def yookassa_webhook_handler(request: web.Request):
                         "Спасибо за покупку! 🚀"
                     )
                 )
-                # Отправляем картинку
                 try:
-                    photo_999 = FSInputFile(os.path.join(IMAGES_DIR, "method_999.jpeg"))
-                    await bot.send_photo(
-                        chat_id=int(user_id),
-                        photo=photo_999,
-                        caption="🧬 «Код личности» у тебя. Это глубокая работа. Не спеши. Дай себе время."
-                    )
-                except:
-                    pass
+                    photo_path = os.path.join(IMAGES_DIR, "method_999.jpeg")
+                    if os.path.exists(photo_path):
+                        photo = FSInputFile(photo_path)
+                        await bot.send_photo(
+                            chat_id=int(user_id),
+                            photo=photo,
+                            caption="🧬 «Код личности» у тебя. Это глубокая работа. Не спеши. Дай себе время."
+                        )
+                except Exception as e:
+                    logger.warning(f"Не удалось отправить картинку 999: {e}")
 
                 try:
                     await bot.send_message(
@@ -205,8 +207,10 @@ async def health_handler(request: web.Request):
     return web.Response(text="OK", status=200)
 
 
+# Маршруты
 app.router.add_get("/", index_handler)
 app.router.add_get("/health", health_handler)
+app.router.add_static("/images/", path=IMAGES_DIR, name="images")
 app.router.add_post(TELEGRAM_WEBHOOK_PATH, telegram_webhook_handler)
 app.router.add_post(YOOKASSA_WEBHOOK_PATH, yookassa_webhook_handler)
 
