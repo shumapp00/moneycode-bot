@@ -199,6 +199,9 @@ async def support(message: Message):
 
 @dp.callback_query(F.data == "check_subscription")
 async def process_subscription_check(callback: CallbackQuery):
+    """Обрабатывает нажатие «Я подписался»."""
+    await callback.answer()
+
     user = callback.from_user
 
     try:
@@ -206,7 +209,6 @@ async def process_subscription_check(callback: CallbackQuery):
 
         if not os.path.exists(file_path):
             await callback.message.answer("😔 Файл временно недоступен. Напиши в поддержку: @_mooney.code_")
-            await callback.answer("Файл не найден")
             return
 
         pdf_file = FSInputFile(file_path)
@@ -237,11 +239,10 @@ async def process_subscription_check(callback: CallbackQuery):
         logger.error(f"Ошибка отправки бесплатного гайда: {e}")
         await callback.message.answer("😔 Произошла ошибка. Напиши в поддержку: @_mooney.code_")
 
-    await callback.answer()
-
 
 @dp.callback_query(F.data == "buy_499")
 async def process_buy_499(callback: CallbackQuery):
+    await callback.answer()
     user = callback.from_user
     await callback.message.answer("⏳ Создаю ссылку на оплату...")
 
@@ -258,11 +259,10 @@ async def process_buy_499(callback: CallbackQuery):
         logger.error(f"Ошибка создания платежа 499: {e}")
         await callback.message.answer(f"😔 Ошибка при создании платежа.\n\n<b>Код:</b>\n<code>{str(e)[:300]}</code>\n\nПришли этот текст админу: @_mooney.code_")
 
-    await callback.answer()
-
 
 @dp.callback_query(F.data == "buy_999")
 async def process_buy_999(callback: CallbackQuery):
+    await callback.answer()
     user = callback.from_user
     await callback.message.answer("⏳ Создаю ссылку на оплату...")
 
@@ -279,26 +279,24 @@ async def process_buy_999(callback: CallbackQuery):
         logger.error(f"Ошибка создания платежа 999: {e}")
         await callback.message.answer(f"😔 Ошибка при создании платежа.\n\n<b>Код:</b>\n<code>{str(e)[:300]}</code>\n\nПришли этот текст админу: @_mooney.code_")
 
-    await callback.answer()
-
 
 @dp.callback_query(F.data == "want_free_first")
 async def process_want_free_first(callback: CallbackQuery):
-    await callback.message.answer("Хорошее решение! Нажми кнопку 🎁 Получить бесплатный гайд в главном меню.")
     await callback.answer()
+    await callback.message.answer("Хорошее решение! Нажми кнопку 🎁 Получить бесплатный гайд в главном меню.")
 
 
 @dp.callback_query(F.data == "back_to_catalog")
 async def process_back_to_catalog(callback: CallbackQuery):
+    await callback.answer()
     text = "📚 <b>Методички Money Code</b>\n\n📘 <b>«Система финансовых ритуалов» — 499₽</b>\n📗 <b>«Код личности: Перепрошивка» — 999₽</b>"
     await callback.message.answer(text, reply_markup=get_catalog_menu())
-    await callback.answer()
 
 
 @dp.callback_query(F.data == "main_menu")
 async def process_main_menu(callback: CallbackQuery):
-    await callback.message.answer("🏠 <b>Главное меню</b>\nВыбери действие:", reply_markup=get_main_menu())
     await callback.answer()
+    await callback.message.answer("🏠 <b>Главное меню</b>\nВыбери действие:", reply_markup=get_main_menu())
 
 
 # ============================================================
