@@ -1,5 +1,6 @@
 """
 Основной модуль Telegram-бота Money Code.
+Обрабатывает команды, callback-запросы, платежи.
 """
 
 import asyncio
@@ -46,6 +47,10 @@ def get_image(image_name):
     return None
 
 
+# ============================================================
+# КОМАНДЫ
+# ============================================================
+
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
     user = message.from_user
@@ -77,6 +82,50 @@ async def cmd_help(message: Message):
     )
     await message.answer(help_text)
 
+
+@dp.message(Command("test_warmup"))
+async def test_warmup(message: Message):
+    """Отправляет все сообщения прогрева админу для проверки."""
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("⛔ Эта команда только для админа")
+        return
+
+    from scheduler import WARMUP_DATA, FOLLOWUP_IMAGE, FOLLOWUP_TEXT, get_image as scheduler_get_image
+
+    await message.answer("🚀 Начинаю отправку тестовых сообщений...")
+
+    for i, data in enumerate(WARMUP_DATA):
+        photo = scheduler_get_image(data["image"])
+        try:
+            if photo:
+                await message.answer_photo(
+                    photo=photo,
+                    caption=f"[ТЕСТ — ДЕНЬ {i+1}]\n\n{data['text']}"
+                )
+            else:
+                await message.answer(f"[ТЕСТ — ДЕНЬ {i+1}] КАРТИНКА НЕ НАЙДЕНА\n\n{data['text']}")
+            await asyncio.sleep(1)
+        except Exception as e:
+            await message.answer(f"❌ Ошибка в дне {i+1}: {e}")
+
+    photo = scheduler_get_image(FOLLOWUP_IMAGE)
+    try:
+        if photo:
+            await message.answer_photo(
+                photo=photo,
+                caption=f"[ТЕСТ — ФОЛЛОУ-АП]\n\n{FOLLOWUP_TEXT}"
+            )
+        else:
+            await message.answer(f"[ТЕСТ — ФОЛЛОУ-АП] КАРТИНКА НЕ НАЙДЕНА\n\n{FOLLOWUP_TEXT}")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка в фоллоу-апе: {e}")
+
+    await message.answer("✅ Все тестовые сообщения отправлены. Проверь визуально.")
+
+
+# ============================================================
+# КНОПКИ МЕНЮ
+# ============================================================
 
 @dp.message(F.text == "🎁 Получить бесплатный гайд")
 async def free_guide_start(message: Message):
@@ -143,6 +192,10 @@ async def support(message: Message):
     )
     await message.answer(text)
 
+
+# ============================================================
+# CALLBACK-КНОПКИ
+# ============================================================
 
 @dp.callback_query(F.data == "check_subscription")
 async def process_subscription_check(callback: CallbackQuery):
@@ -248,6 +301,10 @@ async def process_main_menu(callback: CallbackQuery):
     await callback.answer()
 
 
+# ============================================================
+# ОТВЕТЫ НА ОПРОСЫ
+# ============================================================
+
 @dp.message(F.text.in_(["🟢", "🟢 Уже внедрил", "🟢 Погрузился(лась), идёт работа"]))
 async def feedback_green(message: Message):
     await message.answer("🔥 Это лучшая новость за день! Если будут вопросы — просто пиши сюда. Я на связи.")
@@ -267,14 +324,22 @@ async def feedback_red(message: Message):
     )
 
 
+# ============================================================
+# ЗАПУСК
+# ============================================================
+
 async def main():
     logger.info("Инициализация базы данных...")
     await init_db()
     logger.info("База данных готова")
+
     logger.info("Удаление старых вебхуков...")
     await bot.delete_webhook(drop_pending_updates=True)
+
     from scheduler import start_scheduler
     await start_scheduler()
+    logger.info("Планировщик запущен")
+
     logger.info("Запуск поллинга...")
     await dp.start_polling(bot)
 
